@@ -21,9 +21,11 @@ services:
     volumes:
       - nextcloud:/var/www/html
     environment:
-      - VIRTUAL_HOST=example.elk
-      - LETSENCRYPT_HOST=example.elk
-      - LETSENCRYPT_EMAIL=email@email.example
+      - VIRTUAL_HOST=example.local
+      - TRUSTED_HOST=example.local
+      - NEXTCLOUD_OVERWRITEPROTOCOL=https
+      - LETSENCRYPT_HOST=example.local
+      - LETSENCRYPT_EMAIL=example.local@example.local
       - POSTGRES_HOST=nextcloud-db
       - POSTGRES_DB_FILE=/run/secrets/postgres_db
       - POSTGRES_USER_FILE=/run/secrets/postgres_user

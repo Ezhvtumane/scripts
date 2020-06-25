@@ -22,8 +22,8 @@ services:
       - nextcloud:/var/www/html
     environment:
       - VIRTUAL_HOST=example.local
-      - TRUSTED_HOST=example.local
-      - NEXTCLOUD_OVERWRITEPROTOCOL=https
+#      - TRUSTED_HOST=example.local
+#      - NEXTCLOUD_OVERWRITEPROTOCOL=https
       - LETSENCRYPT_HOST=example.local
       - LETSENCRYPT_EMAIL=example.local@example.local
       - POSTGRES_HOST=nextcloud-db

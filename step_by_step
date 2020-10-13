@@ -3,8 +3,10 @@
   - curl install
 3) clone this repo
 4) update virtual_host, TRUSTED_HOST, LETSENCRYPT_HOST and LETSENCRYPT_EMAIL by your data
+4a) fill up secrets
 5) run docker-compose up -d
-6) add to nextcloud container -> config/config.php:
-  - trusted domains -> your domain from virtual_host
+6) add to nextcloud container and install editor, 
+open file -> config/config.php:
+  - trusted domains -> add your domain from virtual_host to list of domains [https://docs.nextcloud.com/server/20/admin_manual/installation/installation_wizard.html#trusted-domains]
   - 'overwriteprotocol' => 'https' (https://github.com/nextcloud/android/issues/4786)
 7) reboot host

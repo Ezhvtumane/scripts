@@ -1,6 +1,42 @@
 version: '3.2'
 
 services:
+
+  apache:
+    image: httpd
+    volumes:
+      - ./src:/usr/local/apache2/htdocs
+    environment:
+      - VIRTUAL_HOST=youdomain.kek
+      - LETSENCRYPT_HOST=youdomain.kek
+    networks:
+      - proxy-tier
+  
+  mtproxy:
+    image: telegrammessenger/proxy:latest
+    restart: always
+    volumes:
+      - proxy-config:/data
+    environment:
+      - VIRTUAL_HOST=telega.youdomain.kek
+      - LETSENCRYPT_HOST=telega.youdomain.kek
+      - SECRET=yoursecret
+    network:
+      - proxy-tier
+
+  portainer:
+    image: portainer/portainer-ce
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    environment:
+      - VIRTUAL_HOST=portainer.youdomain.kek
+      - LETSENCRYPT_HOST=portainer.youdomain.kek
+      - VIRTUAL_PORT=9000
+    network:
+      - proxy-tier
+
   nextcloud-db:
     image: postgres
     restart: always
@@ -21,9 +57,9 @@ services:
     volumes:
       - nextcloud:/var/www/html
     environment:
-      - VIRTUAL_HOST=example.elk
-      - LETSENCRYPT_HOST=example.elk
-      - LETSENCRYPT_EMAIL=email@email.example
+      - VIRTUAL_HOST=nextcloud.youdomain.kek
+      - LETSENCRYPT_HOST=nextcloud.youdomain.kek
+      - LETSENCRYPT_EMAIL=email+yourdomain@email.example
       - POSTGRES_HOST=nextcloud-db
       - POSTGRES_DB_FILE=/run/secrets/postgres_db
       - POSTGRES_USER_FILE=/run/secrets/postgres_user
@@ -34,7 +70,6 @@ services:
       - nextcloud-db
     networks:
       - proxy-tier
-      - default
     secrets:
       - nextcloud_admin_password
       - nextcloud_admin_user
@@ -77,6 +112,8 @@ volumes:
   certs:
   vhost.d:
   html:
+  portainer_data:
+  proxy-data:
 
 networks:
   proxy-tier:

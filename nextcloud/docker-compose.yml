@@ -60,6 +60,8 @@ services:
       - VIRTUAL_HOST=nextcloud.youdomain.kek
       - LETSENCRYPT_HOST=nextcloud.youdomain.kek
       - LETSENCRYPT_EMAIL=email+yourdomain@email.example
+      - TRUSTED_HOST=example.local
+      - NEXTCLOUD_OVERWRITEPROTOCOL=https
       - POSTGRES_HOST=nextcloud-db
       - POSTGRES_DB_FILE=/run/secrets/postgres_db
       - POSTGRES_USER_FILE=/run/secrets/postgres_user

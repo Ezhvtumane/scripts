@@ -11,18 +11,6 @@ services:
       - LETSENCRYPT_HOST=youdomain.kek
     networks:
       - proxy-tier
-  
-  mtproxy:
-    image: telegrammessenger/proxy:latest
-    restart: always
-    volumes:
-      - proxy-config:/data
-    environment:
-      - VIRTUAL_HOST=telega.youdomain.kek
-      - LETSENCRYPT_HOST=telega.youdomain.kek
-      - SECRET=yoursecret
-    network:
-      - proxy-tier
 
   portainer:
     image: portainer/portainer-ce

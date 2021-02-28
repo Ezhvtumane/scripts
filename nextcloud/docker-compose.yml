@@ -2,15 +2,42 @@ version: '3.2'
 
 services:
 
-  apache:
-    image: httpd
+  wordpress-db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      - MYSQL_DATABASE=/run/secrets/wordpress_db
+      - MYSQL_USER=/run/secrets/wordpress_db_user
+      - MYSQL_PASSWORD=/run/secrets/wordpress_db_password
     volumes:
-      - ./src:/usr/local/apache2/htdocs
+      - wordpress-db:/var/lib/mysql
+    secrets:
+      - wordpress_db
+      - wordpress_db_password
+      - wordpress_db_user
+
+  wordpress:
+    image: wordpress
+    restart: always
     environment:
       - VIRTUAL_HOST=youdomain.kek
       - LETSENCRYPT_HOST=youdomain.kek
+      - LETSENCRYPT_EMAIL=email+yourdomain@email.example
+      - WORDPRESS_DB_HOST=wordpress-db
+      - WORDPRESS_DB_USER=/run/secrets/wordpress_db_user
+      - WORDPRESS_DB_PASSWORD=/run/secrets/wordpress_db_password
+      - WORDPRESS_DB_NAME=/run/secrets/wordpress_db
+    depends_on:
+      - wordpress-db
+      - nginx-proxy
+    volumes:
+      - wordpress:/var/www/html
     networks:
       - proxy-tier
+    secrets:
+      - wordpress_db
+      - wordpress_db_password
+      - wordpress_db_user
 
   portainer:
     image: portainer/portainer-ce
@@ -31,15 +58,15 @@ services:
     volumes:
       - nextcloud-db:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB_FILE=/run/secrets/postgres_db
-      - POSTGRES_USER_FILE=/run/secrets/postgres_user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRES_DB_FILE=/run/secrets/nextcloud_db
+      - POSTGRES_USER_FILE=/run/secrets/nextcloud_db_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/nextcloud_db_password
     secrets:
-      - postgres_db
-      - postgres_password
-      - postgres_user
+      - nextcloud_db
+      - nextcloud_db_password
+      - nextcloud_db_user
 
-  nextcloud-app:
+  nextcloud:
     image: nextcloud
     restart: always
     volumes:
@@ -47,17 +74,17 @@ services:
     environment:
       - VIRTUAL_HOST=nextcloud.youdomain.kek
       - LETSENCRYPT_HOST=nextcloud.youdomain.kek
-      - LETSENCRYPT_EMAIL=email+yourdomain@email.example
-      - TRUSTED_HOST=example.local
+#      - TRUSTED_HOST=example.local
       - NEXTCLOUD_OVERWRITEPROTOCOL=https
       - POSTGRES_HOST=nextcloud-db
-      - POSTGRES_DB_FILE=/run/secrets/postgres_db
-      - POSTGRES_USER_FILE=/run/secrets/postgres_user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRES_DB_FILE=/run/secrets/nextcloud_db
+      - POSTGRES_USER_FILE=/run/secrets/nextcloud_db_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/nextcloud_db_password
       - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
       - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
     depends_on:
       - nextcloud-db
+      - nginx-proxy      
     networks:
       - proxy-tier
     secrets:
@@ -67,7 +94,7 @@ services:
       - postgres_password
       - postgres_user
 
-  nextcloud-proxy:
+  nginx-proxy:
     build: ./proxy
     restart: always
     ports:
@@ -94,7 +121,7 @@ services:
     networks:
       - proxy-tier
     depends_on:
-      - nextcloud-proxy
+      - nginx-proxy
 
 volumes:
   nextcloud-db:
@@ -104,18 +131,26 @@ volumes:
   html:
   portainer_data:
   proxy-data:
+  wordpress-db:
+  wordpress:
 
 networks:
   proxy-tier:
 
 secrets:
-  nextcloud_admin_password:
-    file: ./nextcloud_admin_password.txt # put admin password to this file
   nextcloud_admin_user:
-    file: ./nextcloud_admin_user.txt # put admin username to this file
-  postgres_db:
-    file: ./postgres_db.txt # put postgresql db name to this file
-  postgres_password:
-    file: ./postgres_password.txt # put postgresql password to this file
-  postgres_user:
-    file: ./postgres_user.txt # put postgresql username to this file
+    file: ./secrets/nextcloud/nextcloud_admin_user.txt # put admin username to this file
+  nextcloud_admin_password:
+    file: ./secrets/nextcloud/nextcloud_admin_password.txt # put admin password to this file
+  nextcloud_db:
+    file: ./secrets/nextcloud/nextcloud_db.txt # put postgresql db name to this file
+  nextcloud_db_user:
+    file: ./secrets/nextcloud/nextcloud_db_user.txt # put postgresql username to this file
+  nextcloud_db_password:
+    file: ./secrets/nextcloud/nextcloud_db_password.txt # put postgresql password to this file
+  wordpress_db:
+    file: ./secrets/wordpress/wordpress_db.txt # put wordpress db name to this file    
+  wordpress_db_user:
+    file: ./secrets/wordpress/wordpress_db_user.txt # put wordpress db name to this file      
+  wordpress_db_password:
+    file: ./secrets/wordpress/wordpress_db_password.txt # put wordpress db name to this file      

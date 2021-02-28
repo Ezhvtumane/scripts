@@ -5,9 +5,25 @@ services:
   mtproxy:
     image: telegrammessenger/proxy:latest
     restart: always
+    ports:
+      - 443:443
+      - 1194:1194
     volumes:
-      - proxy-config:/data
+      - mtproxy-config:/data
     environment:
-      - VIRTUAL_HOST=telega.youdomain.kek
-      - LETSENCRYPT_HOST=telega.youdomain.kek
       - SECRET=yoursecret
+
+#  mtproxy:
+#    image: telegrammessenger/proxy:latest
+#    restart: always
+#    ports:
+#      - 1194:1194
+#    volumes:
+#      - mtproxy-config:/data
+#    environment:
+#      - VIRTUAL_HOST=telega.youdomain.kek
+#      - LETSENCRYPT_HOST=telega.youdomain.kek
+#      - SECRET=yoursecret
+
+volumes:
+  mtproxy-config:

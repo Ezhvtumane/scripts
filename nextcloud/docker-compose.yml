@@ -49,7 +49,7 @@ services:
       - VIRTUAL_HOST=portainer.youdomain.kek
       - LETSENCRYPT_HOST=portainer.youdomain.kek
       - VIRTUAL_PORT=9000
-    network:
+    networks:
       - proxy-tier
 
   nextcloud-db:
@@ -90,9 +90,9 @@ services:
     secrets:
       - nextcloud_admin_password
       - nextcloud_admin_user
-      - postgres_db
-      - postgres_password
-      - postgres_user
+      - nextcloud_db
+      - nextcloud_db_password
+      - nextcloud_db_user
 
   nginx-proxy:
     build: ./proxy

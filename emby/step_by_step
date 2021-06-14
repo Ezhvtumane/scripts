@@ -1,0 +1,8 @@
+1) docker install -> https://www.digitalocean.com/community/tutorials/docker-ubuntu-18-04-1-ru
+1a) install portainer
+2) docker pull emby/embyserver:latest 
+2a) update -> the same (look up)
+3) mkdir for media and config
+4) run docker-emby-run.sh (not sure about UID and GUID GIDLIST)
+5) go on server ip and port
+6) setup emby

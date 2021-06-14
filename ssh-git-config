@@ -1,0 +1,5 @@
+Host github.com #important note. here must be a host from where you will get repo git@github.com or git@blabalHOt.com
+  HostName github.com
+  User #your github username
+  IdentityFile #you local key ~/.ssh/id_rsa
+  IdentitiesOnly yes

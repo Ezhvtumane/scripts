@@ -3,7 +3,7 @@ version: '3.2'
 services:
   
   i2p-router:
-    name: i2p-router
+    container_name: i2p-router
     image: geti2p/i2p:latest
     restart: always
     ports:

@@ -2,7 +2,7 @@ version: '3.2'
 
 services:
   
-  mtproxy:
+  i2p-router:
     name: i2p-router
     image: geti2p/i2p:latest
     restart: always
@@ -15,18 +15,6 @@ services:
     volumes:
       - i2phome:/i2p/.i2p
       - i2ptorrents:/i2psnark
-
-#  mtproxy:
-#    image: telegrammessenger/proxy:latest
-#    restart: always
-#    ports:
-#      - 1194:1194
-#    volumes:
-#      - mtproxy-config:/data
-#    environment:
-#      - VIRTUAL_HOST=telega.youdomain.kek
-#      - LETSENCRYPT_HOST=telega.youdomain.kek
-#      - SECRET=yoursecret
 
 volumes:
   i2phome:

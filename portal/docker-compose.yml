@@ -1,0 +1,190 @@
+version: '3.2'
+
+services:
+
+  wireguard:
+    image: lscr.io/linuxserver/wireguard
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - SERVERURL=auto #wireguard.domain.com #optional
+      - SERVERPORT=51820 #optional
+      - PEERS=gPC,gPhone,gMac,oPhone,oMac  #1 #optional
+      - PEERDNS=auto #optional
+      - INTERNAL_SUBNET=10.13.13.0 #optional
+      - ALLOWEDIPS=0.0.0.0/0 #optional
+    volumes:
+      - /path/to/appdata/config:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  wordpress-db:
+    image: mysql:5.7
+    container_name: wp-msql
+    restart: always
+    environment:
+      - MYSQL_DATABASE=/run/secrets/wordpress_db
+      - MYSQL_USER=/run/secrets/wordpress_db_user
+      - MYSQL_PASSWORD=/run/secrets/wordpress_db_password
+      - MYSQL_RANDOM_ROOT_PASSWORD='1'
+    volumes:
+      - wordpress-db:/var/lib/mysql
+    secrets:
+      - wordpress_db
+      - wordpress_db_password
+      - wordpress_db_user
+
+  wordpress-app:
+    image: wordpress
+    container_name: wp
+    restart: always
+    environment:
+      - VIRTUAL_HOST=georgyorlov.com
+      - LETSENCRYPT_HOST=georgyorlov.com
+      - LETSENCRYPT_EMAIL=gogaopel+georgyorlovdotcom@gmail.com
+      - WORDPRESS_DB_HOST=wordpress-db
+      - WORDPRESS_DB_USER=/run/secrets/wordpress_db_user
+      - WORDPRESS_DB_PASSWORD=/run/secrets/wordpress_db_password
+      - WORDPRESS_DB_NAME=/run/secrets/wordpress_db
+    depends_on:
+      - wordpress-db
+      - nginx-proxy
+    volumes:
+      - wordpress-app:/var/www/html
+    networks:
+      - proxy-tier
+      - default
+    secrets:
+      - wordpress_db
+      - wordpress_db_password
+      - wordpress_db_user
+
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    environment:
+      - VIRTUAL_HOST=portainer.georgyorlov.com
+      - LETSENCRYPT_HOST=portainer.georgyorlov.com
+      - VIRTUAL_PORT=9000
+    networks:
+      - proxy-tier
+
+  nextcloud-db:
+    image: postgres:13-alpine
+    container_name: nc-pg
+    restart: always
+    volumes:
+      - nextcloud-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB_FILE=/run/secrets/nextcloud_db
+      - POSTGRES_USER_FILE=/run/secrets/nextcloud_db_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/nextcloud_db_password
+    secrets:
+      - nextcloud_db
+      - nextcloud_db_password
+      - nextcloud_db_user
+
+  nextcloud-app:
+    image: nextcloud
+    container_name: nc
+    restart: always
+    volumes:
+      - nextcloud-app:/var/www/html
+    environment:
+      - VIRTUAL_HOST=nextcloud.georgyorlov.com
+      - LETSENCRYPT_HOST=nextcloud.georgyorlov.com
+      - TRUSTED_HOST=nextcloud.georgyorlov.com
+      - NEXTCLOUD_OVERWRITEPROTOCOL=https
+      - POSTGRES_HOST=nextcloud-db
+      - POSTGRES_DB_FILE=/run/secrets/nextcloud_db
+      - POSTGRES_USER_FILE=/run/secrets/nextcloud_db_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/nextcloud_db_password
+      - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
+      - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
+    depends_on:
+      - nextcloud-db
+      - nginx-proxy
+    networks:
+      - proxy-tier
+      - default
+    secrets:
+      - nextcloud_admin_password
+      - nextcloud_admin_user
+      - nextcloud_db
+      - nextcloud_db_password
+      - nextcloud_db_user
+
+
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+    networks:
+      - proxy-tier
+
+  nginx-proxy-acme:
+    image: nginxproxy/acme-companion
+    container_name: acme
+    restart: always   
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/etc/acme.sh
+    volumes_from:
+      - nginx-proxy
+    environment:
+      - DEFAULT_EMAIL=gogaopel+georgyorlovdotcomproxy@gmail.com
+    networks:
+      - proxy-tier
+
+volumes:
+  nextcloud-db:
+  nextcloud-app:
+  certs:
+  vhost:
+  html:
+  acme:
+  wordpress-db:
+  wordpress-app:
+  portainer_data:
+
+networks:
+  proxy-tier:
+
+secrets:
+  nextcloud_admin_user:
+    file: ./secrets/nextcloud/nextcloud_admin_user.txt # put admin username to this file
+  nextcloud_admin_password:
+    file: ./secrets/nextcloud/nextcloud_admin_password.txt # put admin password to this file
+  nextcloud_db:
+    file: ./secrets/nextcloud/nextcloud_db.txt # put postgresql db name to this file
+  nextcloud_db_user:
+    file: ./secrets/nextcloud/nextcloud_db_user.txt # put postgresql username to this file
+  nextcloud_db_password:
+    file: ./secrets/nextcloud/nextcloud_db_password.txt # put postgresql password to this file
+  wordpress_db:
+    file: ./secrets/wordpress/wordpress_db.txt # put wordpress db name to this file    
+  wordpress_db_user:
+    file: ./secrets/wordpress/wordpress_db_user.txt # put wordpress db name to this file      
+  wordpress_db_password:
+    file: ./secrets/wordpress/wordpress_db_password.txt # put wordpress db name to this file      

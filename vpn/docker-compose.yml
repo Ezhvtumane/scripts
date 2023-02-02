@@ -9,6 +9,11 @@ services:
     ports:
       - "500:500/udp"
       - "4500:4500/udp"
-#    privileged: true
+    privileged: true
 #    hostname: ipsec-vpn-server
-#    container_name: ipsec-vpn-server
+    container_name: ipsec-vpn-server
+    volumes:
+      - ikev2-vpn-data:/etc/ipsec.d
+
+volumes:
+  ikev2-vpn-data:

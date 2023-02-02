@@ -1,0 +1,21 @@
+version: '3.2'
+
+services:
+  
+  i2p-router:
+    container_name: i2p-router
+    image: geti2p/i2p:latest
+    restart: always
+    ports:
+      - 4444:4444
+      - 6668:6668
+      - 7657:7657
+      - 36851:12345
+      - 36851:12345/udp
+    volumes:
+      - i2phome:/i2p/.i2p
+      - i2ptorrents:/i2psnark
+
+volumes:
+  i2phome:
+  i2ptorrents:

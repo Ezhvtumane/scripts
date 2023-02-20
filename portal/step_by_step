@@ -1,0 +1,13 @@
+1) docker install -> https://www.digitalocean.com/community/tutorials/docker-ubuntu-18-04-1-ru
+2) docker-compose install -> https://docs.docker.com/compose/install/#alternative-install-options 
+  - curl install
+3) clone this repo
+4) update virtual_host, TRUSTED_HOST, LETSENCRYPT_HOST and LETSENCRYPT_EMAIL by your data
+4a) fill up secrets
+5) run docker-compose up -d
+6) add to nextcloud container and install editor, 
+open file -> config/config.php:
+  - trusted domains -> add your domain from virtual_host to list of domains [https://docs.nextcloud.com/server/20/admin_manual/installation/installation_wizard.html#trusted-domains]
+  - 'overwriteprotocol' => 'https' (https://github.com/nextcloud/android/issues/4786)
+7) don't forget aboud uploadsize.conf! cp into nginx container
+8) reboot host

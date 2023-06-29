@@ -9,4 +9,5 @@
 open file -> config/config.php:
   - trusted domains -> add your domain from virtual_host to list of domains [https://docs.nextcloud.com/server/20/admin_manual/installation/installation_wizard.html#trusted-domains]
   - 'overwriteprotocol' => 'https' (https://github.com/nextcloud/android/issues/4786)
-7) reboot host
+7) don't forget aboud uploadsize.conf! cp into nginx container
+8) reboot host

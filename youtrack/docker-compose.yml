@@ -1,0 +1,59 @@
+version: '3.7'
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - ./proxy/uploadsize.conf:/etc/nginx/conf.d/uploadsize.conf
+    networks:
+      - proxy-tier
+
+  nginx-proxy-acme:
+    image: nginxproxy/acme-companion
+    container_name: acme
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/etc/acme.sh
+    volumes_from:
+      - nginx-proxy
+    environment:
+      - DEFAULT_EMAIL=prefix+yourdomaindotcomproxy@gmail.com
+    networks:
+      - proxy-tier
+
+  youtrack:
+    image: jetbrains/youtrack:{vertion}
+    container_name: youtrack
+    restart: always
+    environment:
+      - VIRTUAL_HOST=youtrack.yourdomain.com
+      - LETSENCRYPT_HOST=youtrack.yourdomain.com
+      - LETSENCRYPT_EMAIL=prefix+yourdomaindotcomproxym@gmail.com
+      - VIRTUAL_PORT=8080
+    volumes:
+      - /home/$USER/youtrack/data:/opt/youtrack/data
+      - /home/$USER/youtrack/conf:/opt/youtrack/conf
+      - /home/$USER/youtrack/logs:/opt/youtrack/logs
+      - /home/$USER/youtrack/backups:/opt/youtrack/backups
+    depends_on:
+      - nginx-proxy
+    networks:
+      - proxy-tier
+
+networks:
+  proxy-tier:
+
+volumes:
+  certs:
+  vhost:
+  html:
+  acme:

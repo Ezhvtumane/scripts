@@ -2,13 +2,57 @@ version: '3.2'
 
 services:
 
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: always
+    volumes:
+      - vw-data:/data
+    environment:
+      - WEBSOCKET_ENABLED=false #true
+      - VIRTUAL_HOST=bitwarden.yourdomain.com
+      - LETSENCRYPT_HOST=bitwarden.yourdomain.com
+      - LETSENCRYPT_EMAIL=prefix+yourdomaindotcom@gmail.com
+    networks:
+      - proxy-tier
+      - default
+    depends_on:
+      - nginx-proxy
+
+  wireguard:
+    image: lscr.io/linuxserver/wireguard
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - SERVERURL=auto #wireguard.domain.com #optional
+      - SERVERPORT=51820 #optional
+      - PEERS=gPC,gPhone,gMac,oPhone,oMac  #1 #optional
+      - PEERDNS=auto #optional
+      - INTERNAL_SUBNET=10.13.13.0 #optional
+      - ALLOWEDIPS=0.0.0.0/0 #optional
+    volumes:
+      - /path/to/appdata/config:/config #fixme
+      - /lib/modules:/lib/modules
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
   wordpress-db:
     image: mysql:5.7
+    container_name: wp-msql
     restart: always
     environment:
       - MYSQL_DATABASE=/run/secrets/wordpress_db
       - MYSQL_USER=/run/secrets/wordpress_db_user
       - MYSQL_PASSWORD=/run/secrets/wordpress_db_password
+      - MYSQL_RANDOM_ROOT_PASSWORD='1'
     volumes:
       - wordpress-db:/var/lib/mysql
     secrets:
@@ -16,13 +60,14 @@ services:
       - wordpress_db_password
       - wordpress_db_user
 
-  wordpress:
+  wordpress-app:
     image: wordpress
+    container_name: wp
     restart: always
     environment:
-      - VIRTUAL_HOST=youdomain.kek
-      - LETSENCRYPT_HOST=youdomain.kek
-      - LETSENCRYPT_EMAIL=email+yourdomain@email.example
+      - VIRTUAL_HOST=yourdomain.com
+      - LETSENCRYPT_HOST=yourdomain.com
+      - LETSENCRYPT_EMAIL=prefix+yourdomaindotcom@gmail.com
       - WORDPRESS_DB_HOST=wordpress-db
       - WORDPRESS_DB_USER=/run/secrets/wordpress_db_user
       - WORDPRESS_DB_PASSWORD=/run/secrets/wordpress_db_password
@@ -31,9 +76,10 @@ services:
       - wordpress-db
       - nginx-proxy
     volumes:
-      - wordpress:/var/www/html
+      - wordpress-app:/var/www/html
     networks:
       - proxy-tier
+      - default
     secrets:
       - wordpress_db
       - wordpress_db_password
@@ -41,19 +87,21 @@ services:
 
   portainer:
     image: portainer/portainer-ce
+    container_name: portainer
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
     environment:
-      - VIRTUAL_HOST=portainer.youdomain.kek
-      - LETSENCRYPT_HOST=portainer.youdomain.kek
+      - VIRTUAL_HOST=portainer.yourdomain.com
+      - LETSENCRYPT_HOST=portainer.yourdomain.com
       - VIRTUAL_PORT=9000
     networks:
       - proxy-tier
 
   nextcloud-db:
-    image: postgres
+    image: postgres:13-alpine
+    container_name: nc-pg
     restart: always
     volumes:
       - nextcloud-db:/var/lib/postgresql/data
@@ -66,15 +114,16 @@ services:
       - nextcloud_db_password
       - nextcloud_db_user
 
-  nextcloud:
+  nextcloud-app:
     image: nextcloud
+    container_name: nc
     restart: always
     volumes:
-      - nextcloud:/var/www/html
+      - nextcloud-app:/var/www/html
     environment:
-      - VIRTUAL_HOST=nextcloud.youdomain.kek
-      - LETSENCRYPT_HOST=nextcloud.youdomain.kek
-#      - TRUSTED_HOST=example.local
+      - VIRTUAL_HOST=nextcloud.yourdomain.com
+      - LETSENCRYPT_HOST=nextcloud.yourdomain.com
+      - TRUSTED_HOST=nextcloud.yourdomain.com
       - NEXTCLOUD_OVERWRITEPROTOCOL=https
       - POSTGRES_HOST=nextcloud-db
       - POSTGRES_DB_FILE=/run/secrets/nextcloud_db
@@ -84,9 +133,10 @@ services:
       - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
     depends_on:
       - nextcloud-db
-      - nginx-proxy      
+      - nginx-proxy
     networks:
       - proxy-tier
+      - default
     secrets:
       - nextcloud_admin_password
       - nextcloud_admin_user
@@ -96,6 +146,7 @@ services:
 
   nginx-proxy:
     image: nginxproxy/nginx-proxy
+    container_name: nginx
     restart: always
     ports:
       - 80:80
@@ -105,11 +156,13 @@ services:
       - certs:/etc/nginx/certs
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
+      - ./proxy/uploadsize.conf:/etc/nginx/conf.d/uploadsize.conf
     networks:
       - proxy-tier
 
   nginx-proxy-acme:
     image: nginxproxy/acme-companion
+    container_name: acme
     restart: always   
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -117,50 +170,22 @@ services:
     volumes_from:
       - nginx-proxy
     environment:
-      - DEFAULT_EMAIL=mail@yourdomain.tld
+      - DEFAULT_EMAIL=prefix+yourdomaindotcomproxy@gmail.com
     networks:
       - proxy-tier
 
-#  nginx-proxy1:
-#    build: ./proxy
-#    restart: always
-#    ports:
-#      - 80:80
-#      - 443:443
-#    labels:
-#      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
-#    volumes:
-#      - certs:/etc/nginx/certs:ro
-#      - vhost.d:/etc/nginx/vhost.d
-#      - html:/usr/share/nginx/html
-#      - /var/run/docker.sock:/tmp/docker.sock:ro
-#    networks:
-#      - proxy-tier
-#    
-#  letsencrypt-companion1:
-#    image: jrcs/letsencrypt-nginx-proxy-companion
-#    restart: always
-#    volumes:
-#      - certs:/etc/nginx/certs
-#      - vhost.d:/etc/nginx/vhost.d
-#      - html:/usr/share/nginx/html
-#      - /var/run/docker.sock:/var/run/docker.sock:ro
-#    networks:
-#      - proxy-tier
-#    depends_on:
-#      - nginx-proxy
-
 volumes:
   nextcloud-db:
-  nextcloud:
+  nextcloud-app:
   certs:
-  vhost.d:
+  vhost:
   html:
-  portainer_data:
-  proxy-data:
-  wordpress-db:
-  wordpress:
   acme:
+  wordpress-db:
+  wordpress-app:
+  portainer_data:
+  vw-data:
+
 networks:
   proxy-tier:
 

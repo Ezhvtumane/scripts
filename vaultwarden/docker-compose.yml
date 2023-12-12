@@ -1,0 +1,19 @@
+version: "2.1"
+services:
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: always
+    volumes:
+      - vw-data:/data
+    environment:
+      - WEBSOCKET_ENABLED=false #true
+      - VIRTUAL_HOST=bitwarden.yourdomain.com
+      - LETSENCRYPT_HOST=bitwarden.yourdomain.com
+      - LETSENCRYPT_EMAIL=prefix+yourdomaindotcom@gmail.com
+    networks:
+      - proxy-tier
+      - default
+    depends_on:
+      - nginx-proxy

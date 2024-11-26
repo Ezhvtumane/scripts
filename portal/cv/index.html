@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <title>Java dev</title>
+    <script id="test">
+        var converter = new showdown.Converter();
+        var text = `
+put your md here
+`
+            ;
+        var html = converter.makeHtml(text);
+    </script>
+
+    <style type="text/css">
+        div {
+            width: 800px;
+            /* Ширина */
+            background: rgb(250, 250, 250);
+            /* Цвет фона */
+            padding: 20px;
+            margin-left: auto;
+            margin-right: auto;
+            /* Поля */
+            /*Отступ слева*/
+            -moz-box-sizing: border-box;
+            /* Для Firefox */
+            -webkit-box-sizing: border-box;
+            /* Для Safari и Chrome */
+            box-sizing: border-box;
+            /* Для IE и Opera */
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="injectionArea">
+    </div>
+
+    <script>
+        document.getElementById("injectionArea").innerHTML += html;
+    </script>
+</body>
+
+</html>

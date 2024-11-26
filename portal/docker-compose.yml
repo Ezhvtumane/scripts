@@ -44,6 +44,20 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
     restart: unless-stopped
 
+  apache:
+    image: httpd:2.4
+    container_name: apache
+    environment:
+      - VIRTUAL_HOST=yourdomain.com
+      - LETSENCRYPT_HOST=yourdomain.com
+      - TRUSTED_HOST=yourdomain.com
+    expose:
+      - 80
+    volumes:
+      - ./cv:/usr/local/apache2/htdocs
+    networks:
+      - proxy-tier
+
   wordpress-db:
     image: mysql:5.7
     container_name: wp-msql
